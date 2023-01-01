@@ -1,8 +1,34 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:window_size/window_size.dart';
+
+// サイズを設定するメソッド
+void setupWindow() {
+  // サイズを固定
+  const double windowWidth = 400;
+  const double windowHeight = 300;
+
+  // webとプラットフォームをチェック
+  if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
+    WidgetsFlutterBinding.ensureInitialized();
+    setWindowTitle('sample');
+    setWindowMinSize(const Size(windowWidth, windowHeight));
+    setWindowMaxSize(const Size(windowWidth, windowHeight));
+    getCurrentScreen().then((screen) {
+      setWindowFrame(Rect.fromCenter(
+        center: screen!.frame.center,
+        width: windowWidth,
+        height: windowHeight,
+      ));
+    });
+  }
+}
 
 void main() {
+  setupWindow(); // サイズを設定
   runApp(const MyApp());
 }
 

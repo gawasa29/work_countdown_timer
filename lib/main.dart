@@ -11,7 +11,7 @@ import 'package:window_size/window_size.dart';
 void setupWindow() {
   // サイズを固定
   const double windowWidth = 400;
-  const double windowHeight = 300;
+  const double windowHeight = 200;
 
   // webとプラットフォームをチェック
   if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
@@ -65,7 +65,8 @@ class _MyHomePageState extends State<MyHomePage> {
   bool timerState = false;
   bool startState = false;
   DateFormat outputFormat = DateFormat.yMMMMEEEEd('ja'); //フォーマットするだけの関数
-  DateTime? now;
+  DateTime? startDay;
+  DateTime? endDay;
 
   //自分のタイマーの時間の実体
   Duration myDuration = const Duration(hours: 80);
@@ -109,7 +110,6 @@ class _MyHomePageState extends State<MyHomePage> {
     final minutes = strDigits(myDuration.inMinutes.remainder(60));
     final seconds = strDigits(myDuration.inSeconds.remainder(60));
     return Scaffold(
-      appBar: AppBar(),
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -142,7 +142,8 @@ class _MyHomePageState extends State<MyHomePage> {
                       resetTimer();
                       startState = false;
                       timerState = false;
-                      now = null;
+                      startDay = null;
+                      endDay = null;
                       setState(() {});
                     },
                     icon: const Icon(Icons.restart_alt)),
@@ -155,7 +156,8 @@ class _MyHomePageState extends State<MyHomePage> {
                     onPressed: () {
                       startState = true;
                       timerState = true;
-                      now = DateTime.now();
+                      startDay = DateTime.now();
+                      endDay = startDay!.add(const Duration(days: 7));
                       startTimer();
                       setState(() {});
                     },
@@ -173,13 +175,13 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
                 const Text('S',
                     style: TextStyle(fontSize: 20, color: Colors.red)),
-                Text((now == null) ? '' : outputFormat.format(now!)),
+                Text((startDay == null) ? '' : outputFormat.format(startDay!)),
                 const SizedBox(
                   width: 10,
                 ),
                 const Text('E',
                     style: TextStyle(fontSize: 20, color: Colors.red)),
-                Text((now == null) ? '' : outputFormat.format(now!)),
+                Text((endDay == null) ? '' : outputFormat.format(endDay!)),
               ],
             ),
           ],

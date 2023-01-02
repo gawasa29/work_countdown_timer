@@ -11,7 +11,7 @@ import 'package:window_size/window_size.dart';
 void setupWindow() {
   // サイズを固定
   const double windowWidth = 400;
-  const double windowHeight = 200;
+  const double windowHeight = 300;
 
   // webとプラットフォームをチェック
   if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
@@ -62,6 +62,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   Timer? countdownTimer;
+  Timer? toDayCountdownTimer;
   bool timerState = false;
   bool startState = false;
   DateFormat outputFormat = DateFormat.yMMMMEEEEd('ja'); //フォーマットするだけの関数
@@ -70,6 +71,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   //自分のタイマーの時間の実体
   Duration myDuration = const Duration(hours: 80);
+  Duration? toDayDuration;
   @override
   void initState() {
     super.initState();
@@ -81,12 +83,19 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void pauseTimer() {
-    setState(() => countdownTimer!.cancel());
+    setState(() {
+      countdownTimer!.cancel();
+      toDayCountdownTimer!.cancel();
+    });
   }
 
   void resetTimer() {
     pauseTimer();
     setState(() => myDuration = const Duration(hours: 80));
+    setState(() {
+      myDuration = const Duration(hours: 80);
+      toDayDuration = null;
+    });
   }
 
   void setCountDown() {
@@ -99,6 +108,25 @@ class _MyHomePageState extends State<MyHomePage> {
         countdownTimer!.cancel();
       } else {
         myDuration = Duration(seconds: seconds);
+      }
+    });
+  }
+
+  void startToDayTimer() {
+    toDayCountdownTimer =
+        Timer.periodic(const Duration(seconds: 1), (_) => setToDayCountDown());
+  }
+
+  void setToDayCountDown() {
+    const reduceSecondsBy = 1;
+    setState(() {
+      //一秒引く
+      final seconds = toDayDuration!.inSeconds - reduceSecondsBy;
+      //タイマーがゼロになったら止まる
+      if (seconds < 0) {
+        toDayCountdownTimer!.cancel();
+      } else {
+        toDayDuration = Duration(seconds: seconds);
       }
     });
   }
@@ -130,13 +158,19 @@ class _MyHomePageState extends State<MyHomePage> {
                     : IconButton(
                         onPressed: () {
                           startTimer();
+                          startToDayTimer();
                           timerState = true;
                         },
                         icon: const Icon(Icons.play_arrow)),
-                Text(
-                  '$hours:$minutes:$seconds',
-                  style: const TextStyle(fontSize: 60),
-                ),
+                (toDayDuration == null)
+                    ? Text(
+                        '$hours:$minutes:$seconds',
+                        style: const TextStyle(fontSize: 60),
+                      )
+                    : Text(
+                        '${strDigits(toDayDuration!.inHours)}:${strDigits(toDayDuration!.inMinutes.remainder(60))}:${strDigits(toDayDuration!.inSeconds.remainder(60))}',
+                        style: const TextStyle(fontSize: 60),
+                      ),
                 IconButton(
                     onPressed: () {
                       resetTimer();
@@ -144,6 +178,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       timerState = false;
                       startDay = null;
                       endDay = null;
+                      toDayDuration = null;
                       setState(() {});
                     },
                     icon: const Icon(Icons.restart_alt)),
@@ -162,6 +197,14 @@ class _MyHomePageState extends State<MyHomePage> {
                       setState(() {});
                     },
                   ),
+            ElevatedButton(
+              child: const Text('today'),
+              onPressed: () {
+                toDayDuration =
+                    myDuration ~/ endDay!.difference(startDay!).inDays;
+                startToDayTimer();
+              },
+            ),
             const SizedBox(
               height: 30,
             ),

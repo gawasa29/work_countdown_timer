@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
 import 'package:window_size/window_size.dart';
 
 // サイズを設定するメソッド
@@ -29,6 +31,7 @@ void setupWindow() {
 
 void main() {
   setupWindow(); // サイズを設定
+  initializeDateFormatting('ja_JP'); //DateTimeを日本語に対応する
   runApp(const MyApp());
 }
 
@@ -60,6 +63,9 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   Timer? countdownTimer;
   bool timerState = false;
+  bool startState = false;
+  DateFormat outputFormat = DateFormat.yMMMMEEEEd('ja'); //フォーマットするだけの関数
+  DateTime? now;
 
   //自分のタイマーの時間の実体
   Duration myDuration = const Duration(hours: 80);
@@ -105,34 +111,77 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       appBar: AppBar(),
       body: Center(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            (timerState)
-                ? IconButton(
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                (timerState)
+                    ? IconButton(
+                        onPressed: () {
+                          if (countdownTimer == null ||
+                              countdownTimer!.isActive) {
+                            pauseTimer();
+                            timerState = false;
+                          }
+                        },
+                        icon: const Icon(Icons.pause))
+                    : IconButton(
+                        onPressed: () {
+                          startTimer();
+                          timerState = true;
+                        },
+                        icon: const Icon(Icons.play_arrow)),
+                Text(
+                  '$hours:$minutes:$seconds',
+                  style: const TextStyle(fontSize: 60),
+                ),
+                IconButton(
                     onPressed: () {
-                      if (countdownTimer == null || countdownTimer!.isActive) {
-                        pauseTimer();
-                        timerState = false;
-                      }
+                      resetTimer();
+                      startState = false;
+                      timerState = false;
+                      now = null;
+                      setState(() {});
                     },
-                    icon: const Icon(Icons.pause))
-                : IconButton(
-                    onPressed: () {
-                      startTimer();
-                      timerState = true;
-                    },
-                    icon: const Icon(Icons.play_arrow)),
-            Text(
-              '$hours:$minutes:$seconds',
-              style: const TextStyle(fontSize: 60),
+                    icon: const Icon(Icons.restart_alt)),
+              ],
             ),
-            IconButton(
-                onPressed: () {
-                  resetTimer();
-                  timerState = false;
-                },
-                icon: const Icon(Icons.restart_alt)),
+            (startState)
+                ? const Text('')
+                : ElevatedButton(
+                    child: const Text('Start'),
+                    onPressed: () {
+                      startState = true;
+                      timerState = true;
+                      now = DateTime.now();
+                      startTimer();
+                      setState(() {});
+                    },
+                  ),
+            const SizedBox(
+              height: 30,
+            ),
+            Row(
+              children: [
+                Text(
+                  '$hours:$minutes:$seconds',
+                ),
+                const SizedBox(
+                  width: 10,
+                ),
+                const Text('S',
+                    style: TextStyle(fontSize: 20, color: Colors.red)),
+                Text((now == null) ? '' : outputFormat.format(now!)),
+                const SizedBox(
+                  width: 10,
+                ),
+                const Text('E',
+                    style: TextStyle(fontSize: 20, color: Colors.red)),
+                Text((now == null) ? '' : outputFormat.format(now!)),
+              ],
+            ),
           ],
         ),
       ),

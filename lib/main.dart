@@ -253,7 +253,6 @@ class _MyHomePageState extends State<MyHomePage> {
                       startState = true;
                       timerState = true;
                       startDay = DateTime.now();
-                      print(startDay);
                       endDay = startDay!.add(const Duration(days: 7));
                       startTimer();
                       setState(() {});

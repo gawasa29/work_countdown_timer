@@ -81,6 +81,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
 //タイマー系の関数
   void startTimer() {
+    //timer.periodicはfor文みたいに繰り返し処理
+    //Timer.periodic(繰り返す間隔の時間, その間隔毎に動作させたい処理)
     countdownTimer =
         Timer.periodic(const Duration(seconds: 1), (_) => setCountDown());
   }
@@ -88,7 +90,9 @@ class _MyHomePageState extends State<MyHomePage> {
   void pauseTimer() {
     setState(() {
       countdownTimer!.cancel();
-      toDayCountdownTimer!.cancel();
+      if (toDayDuration != null) {
+        toDayCountdownTimer!.cancel();
+      }
     });
   }
 
@@ -111,6 +115,8 @@ class _MyHomePageState extends State<MyHomePage> {
         countdownTimer!.cancel();
       } else {
         myDuration = Duration(seconds: seconds);
+        //ローカルに保存
+        saveDate();
       }
     });
   }
@@ -163,7 +169,34 @@ class _MyHomePageState extends State<MyHomePage> {
     final hours = strDigits(myDuration.inHours);
     final minutes = strDigits(myDuration.inMinutes.remainder(60));
     final seconds = strDigits(myDuration.inSeconds.remainder(60));
+
     return Scaffold(
+      appBar: AppBar(
+        actions: [
+          PopupMenuButton(
+            itemBuilder: ((context) => [
+                  PopupMenuItem(
+                    child: const Text('today'),
+                    onTap: () {
+                      if (startDay != null && endDay != null) {
+                        toDayDuration =
+                            myDuration ~/ endDay!.difference(startDay!).inDays;
+                        startToDayTimer();
+                      }
+                    },
+                  ),
+                  PopupMenuItem(
+                    child: const Text('read'),
+                    onTap: () {
+                      readDate();
+                      startState = true;
+                      setState(() {});
+                    },
+                  ),
+                ]),
+          ),
+        ],
+      ),
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -184,8 +217,10 @@ class _MyHomePageState extends State<MyHomePage> {
                     : IconButton(
                         onPressed: () {
                           startTimer();
-                          startToDayTimer();
                           timerState = true;
+                          if (toDayDuration != null) {
+                            startToDayTimer();
+                          }
                         },
                         icon: const Icon(Icons.play_arrow)),
                 (toDayDuration == null)
@@ -224,31 +259,6 @@ class _MyHomePageState extends State<MyHomePage> {
                       setState(() {});
                     },
                   ),
-            Row(
-              children: [
-                ElevatedButton(
-                  child: const Text('today'),
-                  onPressed: () {
-                    toDayDuration =
-                        myDuration ~/ endDay!.difference(startDay!).inDays;
-                    startToDayTimer();
-                  },
-                ),
-                ElevatedButton(
-                  child: const Text('save'),
-                  onPressed: () {
-                    saveDate();
-                  },
-                ),
-                ElevatedButton(
-                  child: const Text('read'),
-                  onPressed: () {
-                    readDate();
-                    setState(() {});
-                  },
-                ),
-              ],
-            ),
             const SizedBox(
               height: 30,
             ),

@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_size/window_size.dart';
 
 // サイズを設定するメソッド
@@ -71,12 +72,14 @@ class _MyHomePageState extends State<MyHomePage> {
 
   //自分のタイマーの時間の実体
   Duration myDuration = const Duration(hours: 80);
+  //今日のタイマー
   Duration? toDayDuration;
   @override
   void initState() {
     super.initState();
   }
 
+//タイマー系の関数
   void startTimer() {
     countdownTimer =
         Timer.periodic(const Duration(seconds: 1), (_) => setCountDown());
@@ -129,6 +132,29 @@ class _MyHomePageState extends State<MyHomePage> {
         toDayDuration = Duration(seconds: seconds);
       }
     });
+  }
+
+  void saveDate() async {
+    final prefs = await SharedPreferences.getInstance();
+    //時間を保存
+    prefs.setInt('hours', myDuration.inHours);
+    prefs.setInt('minutes', myDuration.inMinutes.remainder(60));
+    prefs.setInt('seconds', myDuration.inSeconds.remainder(60));
+
+    //日付を保存
+    prefs.setString('startDay', startDay.toString());
+    prefs.setString('endDay', endDay.toString());
+  }
+
+  void readDate() async {
+    final prefs = await SharedPreferences.getInstance();
+//保存してたデータを時間の実体に代入
+    myDuration = Duration(
+        hours: prefs.getInt('hours')!,
+        minutes: prefs.getInt('minutes')!,
+        seconds: prefs.getInt('seconds')!);
+    startDay = DateTime.parse(prefs.getString('startDay')!);
+    endDay = DateTime.parse(prefs.getString('endDay')!);
   }
 
   @override
@@ -192,18 +218,36 @@ class _MyHomePageState extends State<MyHomePage> {
                       startState = true;
                       timerState = true;
                       startDay = DateTime.now();
+                      print(startDay);
                       endDay = startDay!.add(const Duration(days: 7));
                       startTimer();
                       setState(() {});
                     },
                   ),
-            ElevatedButton(
-              child: const Text('today'),
-              onPressed: () {
-                toDayDuration =
-                    myDuration ~/ endDay!.difference(startDay!).inDays;
-                startToDayTimer();
-              },
+            Row(
+              children: [
+                ElevatedButton(
+                  child: const Text('today'),
+                  onPressed: () {
+                    toDayDuration =
+                        myDuration ~/ endDay!.difference(startDay!).inDays;
+                    startToDayTimer();
+                  },
+                ),
+                ElevatedButton(
+                  child: const Text('save'),
+                  onPressed: () {
+                    saveDate();
+                  },
+                ),
+                ElevatedButton(
+                  child: const Text('read'),
+                  onPressed: () {
+                    readDate();
+                    setState(() {});
+                  },
+                ),
+              ],
             ),
             const SizedBox(
               height: 30,
